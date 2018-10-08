@@ -346,10 +346,6 @@ class AntipodalDepthImageGraspSampler(ImageGraspSampler):
         logging.debug('Depth edge detection took %.3f sec' %(time() - edge_start))
         logging.debug('Found %d edge pixels' %(num_pixels))
 
-        # exit if no edge pixels
-        if num_pixels == 0:
-            return []
-
         # compute_max_depth
         min_depth = np.min(depth_im_mask.data[depth_im_mask.data > 0]) + self._min_depth_offset
         max_depth = np.max(depth_im_mask.data[depth_im_mask.data > 0]) + self._max_depth_offset
@@ -381,6 +377,10 @@ class AntipodalDepthImageGraspSampler(ImageGraspSampler):
             vis.imshow(segmask)
             vis.title('Segmask')
             vis.show()
+
+        # exit if no edge pixels
+        if num_pixels == 0:
+            return []
 
         # form set of valid candidate point pairs
         pruning_start = time()

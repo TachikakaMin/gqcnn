@@ -47,13 +47,18 @@ if __name__ == '__main__':
 
     # parse args
     parser = argparse.ArgumentParser(description='Run a grasping policy on an example image')
-    parser.add_argument('--depth_image', type=str, default=None, help='path to a test depth image stored as a .npy file')
+    parser.add_argument('--image_number', type=str, default=None, help='image number from depth and rgb image pair stored in /gqcnn/data/examples/mobile as .npy file (depth) and .png file (color)')
     parser.add_argument('--segmask', type=str, default=None, help='path to an optional segmask to use')
     parser.add_argument('--camera_intrinsics', type=str, default=None, help='path to the camera intrinsics')
     parser.add_argument('--model_dir', type=str, default=None, help='path to a trained model to run')
     parser.add_argument('--config_filename', type=str, default=None, help='path to configuration file to use')
     args = parser.parse_args()
-    depth_im_filename = args.depth_image
+    depth_im_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+					'..',
+					'data/examples/mobile/depth_'+args.image_number+'.npy')
+    rgb_im_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+					'..',
+					'data/examples/mobile/rgb_'+args.image_number+'.png')
     segmask_filename = args.segmask
     camera_intr_filename = args.camera_intrinsics
     model_dir = args.model_dir
@@ -63,6 +68,12 @@ if __name__ == '__main__':
         depth_im_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                          '..',
                                          'data/examples/single_object/depth_0.npy')
+
+    if rgb_im_filename is None:
+	rgb_im_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+					 '..',
+					 'data/examples/single_object/color_0.png')    
+
     if camera_intr_filename is None:
         camera_intr_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                             '..',
@@ -91,14 +102,13 @@ if __name__ == '__main__':
     # read images
     depth_im = DepthImage.open(depth_im_filename, frame=camera_intr.frame)
     depth_im = depth_im.inpaint(rescale_factor=inpaint_rescale_factor)
-    color_im = ColorImage(np.zeros([depth_im.height, depth_im.width, 3]).astype(np.uint8),
-                          frame=camera_intr.frame)
+    color_im = ColorImage.open(rgb_im_filename, frame=camera_intr.frame)
     
     # optionally read a segmask
     segmask = None
     if segmask_filename is not None:
         segmask = BinaryImage.open(segmask_filename)
-    
+        
     # create state
     rgbd_im = RgbdImage.from_color_and_depth(color_im, depth_im)
     state = RgbdImageState(rgbd_im, camera_intr, segmask=segmask)
@@ -112,7 +122,7 @@ if __name__ == '__main__':
     # vis final grasp
     if policy_config['vis']['final_grasp']:
         vis.figure(size=(10,10))
-        vis.imshow(rgbd_im.depth, vmin=0.6, vmax=0.9)
+        vis.imshow(rgbd_im.color, vmin=0.6, vmax=0.9)
         vis.grasp(action.grasp, scale=2.5, show_center=False, show_axis=True)
         vis.title('Planned grasp on depth (Q=%.3f)' %(action.q_value))
         vis.show()
