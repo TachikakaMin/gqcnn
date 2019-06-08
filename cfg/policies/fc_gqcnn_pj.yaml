@@ -15,7 +15,7 @@ policy:
   # metrics
   metric:
     type: fcgqcnn
-    gqcnn_model: /path/to/your/FC-GQ-Image-Wise
+    gqcnn_model: /usr0/home/tweng/catkin_ws/src/gqcnn/models/FC-GQCNN-4.0-PJ
     gqcnn_backend: tf
     fully_conv_gqcnn_config:
       im_height: 480
@@ -30,7 +30,7 @@ policy:
     actions_3d: 0
     affordance_map: 0
   vis:
-    final_grasp: 1
+    final_grasp: 0
 
     vmin: 0.5
     vmax: 0.8

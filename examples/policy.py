@@ -31,6 +31,7 @@ import argparse
 import json
 import os
 import time
+import skimage
 
 import numpy as np
 
@@ -63,7 +64,7 @@ if __name__ == '__main__':
     config_filename = args.config_filename
     fully_conv = args.fully_conv
 
-    assert not (fully_conv and depth_im_filename is not None and segmask_filename is None), 'Fully-Convolutional policy expects a segmask.'
+    # assert not (fully_conv and depth_im_filename is not None and segmask_filename is None), 'Fully-Convolutional policy expects a segmask.'
 
     if depth_im_filename is None:
         if fully_conv:
@@ -147,17 +148,26 @@ if __name__ == '__main__':
             
     # setup sensor
     camera_intr = CameraIntrinsics.load(camera_intr_filename)
-        
-    # read images
-    depth_data = np.load(depth_im_filename)
-    depth_im = DepthImage(depth_data, frame=camera_intr.frame)
-    color_im = ColorImage(np.zeros([depth_im.height, depth_im.width, 3]).astype(np.uint8),
-                          frame=camera_intr.frame)
     
+    # read images
+    depth_data = np.load("%sdepth_%s.npy" % (depth_im_filename, counter))
+    color_data = skimage.data.imread("%scolor_%s.png" % (depth_im_filename, counter))
+
+    depth_data[depth_data > 0.7] = 0
+
+    depth_im = DepthImage(depth_data, frame=camera_intr.frame)
+    # color_im = ColorImage(np.zeros([depth_im.height, depth_im.width, 3]).astype(np.uint8),
+                        #   frame=camera_intr.frame)
+    color_im = ColorImage(color_data.astype(np.uint8), frame=camera_intr.frame)
+
+    depth_data[depth_data < 0.7] = np.iinfo(np.uint8).max
+    depth_data[depth_data < np.iinfo(np.uint8).max] = 0
+    segmask = BinaryImage(depth_data.astype(np.uint8))
+
     # optionally read a segmask
-    segmask = None
-    if segmask_filename is not None:
-        segmask = BinaryImage.open(segmask_filename)
+    # segmask = None
+    # if segmask_filename is not None:
+    #     segmask = BinaryImage.open(segmask_filename)
     valid_px_mask = depth_im.invalid_pixel_mask().inverse()
     if segmask is None:
         segmask = valid_px_mask

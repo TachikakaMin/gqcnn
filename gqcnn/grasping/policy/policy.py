@@ -283,13 +283,23 @@ class GraspingPolicy(Policy):
             action_dir = os.path.join(self._policy_dir, 'action')
             action.save(action_dir)
         return action
-        
+
     @abstractmethod
     def _action(self, state):
         """ Returns an action for a given state.
         """
         pass
-    
+
+    def get_target(self, state):
+        target = self._get_target(state)
+        return target
+
+    @abstractmethod
+    def _get_target(self, state):
+        """ Returns a target for a given state.
+        """
+        pass
+
     def show(self, filename=None, dpi=100):
         """ Show a figure. """
         if self._logging_dir is None:

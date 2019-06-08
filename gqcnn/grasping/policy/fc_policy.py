@@ -244,6 +244,69 @@ class FullyConvolutionalGraspingPolicy(GraspingPolicy):
 
         return actions[-1] if (self._filter_grasps or num_actions == 1) else actions[-(num_actions+1):]
 
+    def _get_target(self, state, num_actions=1):
+        """Plan target(s)."""
+        if self._filter_grasps:
+            assert self._filters is not None, 'Trying to filter grasps but no filters were provided!'
+            assert num_actions == 1, 'Filtering support is only implemented for single actions!'
+            num_actions = self._max_grasps_to_filter
+
+        # set up log dir for state visualizations
+        state_output_dir = None
+        if self._vis_output_dir is not None:
+            state_output_dir = os.path.join(self._vis_output_dir, 'state_{}'.format(str(self._state_counter).zfill(5)))
+            if not os.path.exists(state_output_dir):
+                os.makedirs(state_output_dir)
+            self._state_counter += 1
+
+        # unpack the RgbdImageState
+        wrapped_depth, raw_depth, raw_seg, camera_intr = self._unpack_state(state)
+
+        # predict
+        images, depths = self._gen_images_and_depths(raw_depth, raw_seg)
+        preds = self._grasp_quality_fn.quality(images, depths)
+
+        # get success probablility predictions only (this is needed because the output of the net is pairs of (p_failure, p_success))
+        preds_success_only = preds[:, :, :, 1::2]
+        
+        # mask predicted success probabilities with the cropped and downsampled object segmask so we only sample grasps on the objects
+        preds_success_only = self._mask_predictions(preds_success_only, raw_seg) 
+
+        # Use to save the full target
+        # fpath = "/media/ExtraDrive2/grasping/data_augmented/"
+        # if not os.path.exists(fpath + img_id):
+            # os.mkdir(fpath + img_id)
+        # np.savez("%s%s/target_%s.npz" % (fpath, img_id, counter), preds_success_only)
+
+        # if we want to visualize more than one action, we have to sample more
+        num_actions_to_sample = self._num_vis_samples if (self._vis_actions_2d or self._vis_actions_3d) else num_actions #TODO: @Vishal if this is used with the 'top_k' sampling method, the final returned action is not the best because the argpartition does not sort the partitioned indices 
+
+        if self._sampling_method == SamplingMethod.TOP_K and self._num_vis_samples:
+            self._logger.warning('FINAL GRASP RETURNED IS NOT THE BEST!')
+
+        # sample num_actions_to_sample indices from the success predictions
+        sampled_ind = self._sample_predictions(preds_success_only, num_actions_to_sample)
+
+        # wrap actions to be returned
+        actions = self._get_actions(preds_success_only, sampled_ind, images, depths, camera_intr, num_actions_to_sample)
+
+        # filter grasps
+        if self._filter_grasps:
+            actions.sort(reverse=True, key=lambda action: action.q_value)
+            actions = [self._filter(actions)]
+
+        # visualize
+        if self._vis_actions_3d:
+            self._logger.info('Generating 3D Visualization...')
+            self._visualize_3d(actions, wrapped_depth, camera_intr, num_actions_to_sample)
+        if self._vis_actions_2d:
+            self._logger.info('Generating 2D visualization...')
+            self._visualize_2d(actions, preds_success_only, wrapped_depth, num_actions_to_sample, self._vis_scale, self._vis_show_axis, output_dir=state_output_dir)
+        if self._vis_affordance_map:
+            self._visualize_affordance_map(preds_success_only, wrapped_depth, self._vis_scale, output_dir=state_output_dir)
+
+        return preds_success_only.max(axis=0)
+
     def action_set(self, state, num_actions):
         """ Plan a set of actions.
 
@@ -292,7 +355,11 @@ class FullyConvolutionalGraspingPolicyParallelJaw(FullyConvolutionalGraspingPoli
         raw_depth_im_segmented[np.where(raw_seg > 0)] = raw_depth_im[np.where(raw_seg > 0)]
         min_depth = np.min(raw_depth_im_segmented) + self._depth_offset
 
-        depth_bin_width = (max_depth - min_depth) / self._num_depth_bins
+        # (Amith)
+        # depth_bin_width = (max_depth - min_depth) / self._num_depth_bins
+        depth_bin_width = 0.005
+        self._num_depth_bins=int((max_depth - min_depth) / depth_bin_width)
+
         depths = np.zeros((self._num_depth_bins, 1)) 
         for i in range(self._num_depth_bins):
             depths[i][0] = min_depth + (i * depth_bin_width + depth_bin_width / 2)
@@ -325,9 +392,30 @@ class FullyConvolutionalGraspingPolicyParallelJaw(FullyConvolutionalGraspingPoli
         """Visualize the actions in 3D."""
         raise NotImplementedError
 
-    def _visualize_affordance_map(self, preds, depth_im):
+    def _visualize_affordance_map(self, preds, depth_im, scale, plot_max=True, output_dir=None):
         """Visualize an affordance map of the network predictions overlayed on the depth image."""
-        raise NotImplementedError
+        self._logger.info('Visualizing affordance map...')
+
+        affordance_map=preds[:,:,:,:]
+        tf_depth_im = depth_im.crop(depth_im.shape[0] - self._gqcnn_recep_h, depth_im.shape[1] - self._gqcnn_recep_w).resize(1.0 / self._gqcnn_stride)
+        
+        target=affordance_map.max(axis=0)
+        affordance_map=target.max(axis=2)
+
+        # plot
+        vis.figure()
+        vis.imshow(tf_depth_im)
+        plt.imshow(affordance_map, cmap=plt.cm.RdYlGn, alpha=0.5, vmin=0.0, vmax=1.0)
+        if plot_max:
+            affordance_argmax = np.unravel_index(np.argmax(affordance_map), affordance_map.shape)
+            plt.scatter(affordance_argmax[1], affordance_argmax[0], c='black', marker='.', s=scale*25)
+            print affordance_map[affordance_argmax]
+        vis.title('Grasp Affordance Map')
+        if output_dir is not None:
+            np.savez("/media/ExtraDrive1/grasping/fcgqcnn_images/registered_data/"+img_id+"/resized_target_"+str(counter)+'.npz',target)
+            vis.savefig("/media/ExtraDrive1/grasping/fcgqcnn_images/registered_data/"+img_id+"/resized_map_"+str(counter)+'.png')
+        else:
+            vis.show()
 
 class FullyConvolutionalGraspingPolicySuction(FullyConvolutionalGraspingPolicy):
     """Suction grasp sampling policy using Fully-Convolutional GQ-CNN network."""
