@@ -15,7 +15,8 @@ policy:
   # metrics
   metric:
     type: fcgqcnn
-    gqcnn_model: /usr0/home/tweng/catkin_ws/src/gqcnn/models/FC-GQCNN-4.0-PJ
+    # gqcnn_model: /usr0/home/tweng/catkin_ws/src/gqcnn/models/FC-GQCNN-4.0-PJ
+    gqcnn_model: /usr/src/corl-grasping/models/FC-GQCNN-4.0-PJ
     gqcnn_backend: tf
     fully_conv_gqcnn_config:
       im_height: 480
