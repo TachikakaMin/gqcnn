@@ -915,27 +915,27 @@ class GQCNNTF(object):
                 
                 
                 
-                layers = ['r', 'p', 'c']
-                start = time.time()
-                with self._sess.as_default():
-                    print(self._input_im_node.shape,self._input_im_arr.shape)
-                    print(self._input_pose_node, self._input_pose_arr.shape)
-                    is_success = activation_visualization(sess_graph_path = None, value_feed_dict={
-                                                                                                                                self._input_im_node: self._input_im_arr,
-                                                                                                                                self._input_pose_node: self._input_pose_arr
-                                                                                                                            }, 
-                                                          layers=layers, path_logdir=os.path.join("/model/Log_"+str(i),"RGB_FCGQCNN"), 
-                                                          path_outdir=os.path.join("/model/Output_"+str(i),"RGB_FCGQCNN"))
-                start = time.time() - start
-                print("Total Time = %f" % (start))
+#                 layers = ['r', 'p', 'c']
+#                 start = time.time()
+#                 with self._sess.as_default():
+#                     print(self._input_im_node.shape,self._input_im_arr.shape)
+#                     print(self._input_pose_node, self._input_pose_arr.shape)
+#                     is_success = activation_visualization(sess_graph_path = None, value_feed_dict={
+#                                                                                                                                 self._input_im_node: self._input_im_arr,
+#                                                                                                                                 self._input_pose_node: self._input_pose_arr
+#                                                                                                                             }, 
+#                                                           layers=layers, path_logdir=os.path.join("/model/Log_"+str(i),"RGB_FCGQCNN"), 
+#                                                           path_outdir=os.path.join("/model/Output_"+str(i),"RGB_FCGQCNN"))
+#                 start = time.time() - start
+#                 print("Total Time = %f" % (start))
                 
                 
                 
                 
-            saver = tf.compat.v1.train.Saver()
-            save_path = saver.save(self._sess, "/model/model.ckpt")
-            summary_writer = tf.compat.v1.summary.FileWriter("/model/log", self._sess.graph)
-            print("Model saved in path: %s" % save_path)
+#             saver = tf.compat.v1.train.Saver()
+#             save_path = saver.save(self._sess, "/model/model.ckpt")
+#             summary_writer = tf.compat.v1.summary.FileWriter("/model/log", self._sess.graph)
+#             print("Model saved in path: %s" % save_path)
             
             
         # Get total prediction time.
