@@ -21,26 +21,37 @@ THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 PURPOSE. THE SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED
 HEREUNDER IS PROVIDED "AS IS". REGENTS HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+
+Factory functions to obtain GQCNNTrainer class based on chosen deep learning
+backend. Currently only Tensorflow is supported.
+Author: Vishal Satish
 """
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from .model import get_gqcnn_model, get_fc_gqcnn_model
-from .training import get_gqcnn_trainer
-from .grasping import (RobustGraspingPolicy, UniformRandomGraspingPolicy,
-                       CrossEntropyRobustGraspingPolicy, RgbdImageState,
-                       FullyConvolutionalGraspingPolicyParallelJaw,
-                       FullyConvolutionalGraspingPolicySuction)
-from .analysis import GQCNNAnalyzer
-from .search import GQCNNSearch
-from .utils import NoValidGraspsException, NoAntipodalPairsFoundException
+from .tf import GQCNNTrainerTF
 
-__all__ = [
-    "get_gqcnn_model", "get_fc_gqcnn_model", "get_gqcnn_trainer",
-    "RobustGraspingPolicy", "UniformRandomGraspingPolicy",
-    "CrossEntropyRobustGraspingPolicy", "RgbdImageState",
-    "FullyConvolutionalGraspingPolicyParallelJaw",
-    "FullyConvolutionalGraspingPolicySuction", "GQCNNAnalyzer", "GQCNNSearch",
-    "NoValidGraspsException", "NoAntipodalPairsFoundException"
-]
+
+def get_gqcnn_trainer(backend="tf"):
+    """Get the GQ-CNN Trainer for the provided backend.
+
+    Note
+    ----
+    Currently only TensorFlow is supported.
+
+    Parameters
+    ----------
+    backend : str
+        The backend to use, currently only "tf" is supported.
+
+    Returns
+    -------
+    :obj:`gqcnn.training.tf.GQCNNTrainerTF`
+        GQ-CNN Trainer with TensorFlow backend.
+    """
+    # Return desired `GQCNNTrainer` instance based on backend.
+    if backend == "tf":
+        return GQCNNTrainerTF
+    else:
+        raise ValueError("Invalid backend: {}".format(backend))

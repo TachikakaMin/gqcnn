@@ -26,21 +26,14 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from .model import get_gqcnn_model, get_fc_gqcnn_model
-from .training import get_gqcnn_trainer
-from .grasping import (RobustGraspingPolicy, UniformRandomGraspingPolicy,
-                       CrossEntropyRobustGraspingPolicy, RgbdImageState,
-                       FullyConvolutionalGraspingPolicyParallelJaw,
-                       FullyConvolutionalGraspingPolicySuction)
-from .analysis import GQCNNAnalyzer
-from .search import GQCNNSearch
-from .utils import NoValidGraspsException, NoAntipodalPairsFoundException
+from .fc_policy import (FullyConvolutionalGraspingPolicyParallelJaw,
+                        FullyConvolutionalGraspingPolicySuction)
+from .policy import (RobustGraspingPolicy, CrossEntropyRobustGraspingPolicy,
+                     RgbdImageState, GraspAction, UniformRandomGraspingPolicy)
 
 __all__ = [
-    "get_gqcnn_model", "get_fc_gqcnn_model", "get_gqcnn_trainer",
-    "RobustGraspingPolicy", "UniformRandomGraspingPolicy",
-    "CrossEntropyRobustGraspingPolicy", "RgbdImageState",
     "FullyConvolutionalGraspingPolicyParallelJaw",
-    "FullyConvolutionalGraspingPolicySuction", "GQCNNAnalyzer", "GQCNNSearch",
-    "NoValidGraspsException", "NoAntipodalPairsFoundException"
+    "FullyConvolutionalGraspingPolicySuction", "RobustGraspingPolicy",
+    "CrossEntropyRobustGraspingPolicy", "UniformRandomGraspingPolicy",
+    "RgbdImageState", "GraspAction"
 ]

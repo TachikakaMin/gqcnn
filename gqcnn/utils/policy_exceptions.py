@@ -21,26 +21,30 @@ THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 PURPOSE. THE SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED
 HEREUNDER IS PROVIDED "AS IS". REGENTS HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+
+Exceptions that can be thrown by sub-classes of `GraspingPolicy`.
+
+Author
+------
+Vishal Satish
 """
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from .model import get_gqcnn_model, get_fc_gqcnn_model
-from .training import get_gqcnn_trainer
-from .grasping import (RobustGraspingPolicy, UniformRandomGraspingPolicy,
-                       CrossEntropyRobustGraspingPolicy, RgbdImageState,
-                       FullyConvolutionalGraspingPolicyParallelJaw,
-                       FullyConvolutionalGraspingPolicySuction)
-from .analysis import GQCNNAnalyzer
-from .search import GQCNNSearch
-from .utils import NoValidGraspsException, NoAntipodalPairsFoundException
 
-__all__ = [
-    "get_gqcnn_model", "get_fc_gqcnn_model", "get_gqcnn_trainer",
-    "RobustGraspingPolicy", "UniformRandomGraspingPolicy",
-    "CrossEntropyRobustGraspingPolicy", "RgbdImageState",
-    "FullyConvolutionalGraspingPolicyParallelJaw",
-    "FullyConvolutionalGraspingPolicySuction", "GQCNNAnalyzer", "GQCNNSearch",
-    "NoValidGraspsException", "NoAntipodalPairsFoundException"
-]
+class NoValidGraspsException(Exception):
+    """Exception for when antipodal point pairs can be found in the depth
+    image but none are valid grasps that can be executed."""
+
+    def __init__(self, in_collision=True, not_confident=False, *args,
+                 **kwargs):
+        self.in_collision = in_collision
+        self.not_confident = not_confident
+        Exception.__init__(self, *args, **kwargs)
+
+
+class NoAntipodalPairsFoundException(Exception):
+    """Exception for when no antipodal point pairs can be found in the depth
+    image."""
+    pass

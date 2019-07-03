@@ -21,26 +21,29 @@ THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 PURPOSE. THE SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED
 HEREUNDER IS PROVIDED "AS IS". REGENTS HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+
+Enums for hyper-parameter search.
+
+Author
+------
+Vishal Satish
 """
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from .model import get_gqcnn_model, get_fc_gqcnn_model
-from .training import get_gqcnn_trainer
-from .grasping import (RobustGraspingPolicy, UniformRandomGraspingPolicy,
-                       CrossEntropyRobustGraspingPolicy, RgbdImageState,
-                       FullyConvolutionalGraspingPolicyParallelJaw,
-                       FullyConvolutionalGraspingPolicySuction)
-from .analysis import GQCNNAnalyzer
-from .search import GQCNNSearch
-from .utils import NoValidGraspsException, NoAntipodalPairsFoundException
 
-__all__ = [
-    "get_gqcnn_model", "get_fc_gqcnn_model", "get_gqcnn_trainer",
-    "RobustGraspingPolicy", "UniformRandomGraspingPolicy",
-    "CrossEntropyRobustGraspingPolicy", "RgbdImageState",
-    "FullyConvolutionalGraspingPolicyParallelJaw",
-    "FullyConvolutionalGraspingPolicySuction", "GQCNNAnalyzer", "GQCNNSearch",
-    "NoValidGraspsException", "NoAntipodalPairsFoundException"
-]
+class TrialConstants(object):
+    TRIAL_CPU_LOAD = 300  # Decrease to get more aggressize CPU utilization.
+    TRIAL_GPU_LOAD = 33  # Decrease to get more aggressize GPU utilization.
+    # This really depends on model size (`TRIAL_GPU_LOAD` does too, but it's
+    # not a hard limit per se). Ideally we would initialize models one-by-one
+    # and monitor the space left, but because model initialization comes after
+    # some metric calculation, we set this to be some upper bound based on the
+    # largest model and do batch initalizations from there.
+    TRIAL_GPU_MEM = 2000
+
+
+class SearchConstants(object):
+    SEARCH_THREAD_SLEEP = 2
+    MIN_TIME_BETWEEN_SCHEDULE_ATTEMPTS = 20
