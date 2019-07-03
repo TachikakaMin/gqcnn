@@ -846,7 +846,7 @@ class GQCNNTF(object):
             during training.
         """
         # Get prediction start time.
-        verbose = True
+#         verbose = True
         start_time = time.time()
 
         if verbose:
